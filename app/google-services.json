@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "841615415100",
+    "project_id": "mobileproject-8185a",
+    "storage_bucket": "mobileproject-8185a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:841615415100:android:add882b2305406b96df039",
+        "android_client_info": {
+          "package_name": "com.example.verhuur_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6hspmAA5Q0duMHQGK9zBjAPhqJR3gDf0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
