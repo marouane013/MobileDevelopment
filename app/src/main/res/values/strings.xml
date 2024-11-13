@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Verhuur-app</string>
+    <string name="welcome_message">Deel je huishoudelijke apparaten met je buurt</string>
+    <string name="categories_subtitle">Kies een categorie om te verkennen</string>
+    <string name="add_item">Item Toevoegen</string>
+    <string name="tap_to_explore">Tik om te verkennen</string>
 </resources>

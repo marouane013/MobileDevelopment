@@ -6,5 +6,11 @@
     <color name="teal_200">#FF03DAC5</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="primaryColor">#00916E</color> <!-- Donkergrijs-blauw -->
+    <color name="secondaryColor">#00916E</color> <!-- Lichter grijs-blauw -->
+    <color name="accentColor">#4CAF50</color> <!-- Groen voor knoppen -->
+    <color name="background">#F5F5F5</color> <!-- Zacht grijs voor achtergrond -->
+    <color name="white">#FFFFFF</color>
+    <color name="custom_green">#00916E</color>
+
 </resources>
