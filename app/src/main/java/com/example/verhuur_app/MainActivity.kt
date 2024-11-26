@@ -11,7 +11,7 @@ import com.example.verhuur_app.databinding.ActivityMainBinding
 import com.google.firebase.auth.FirebaseAuth
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding: ActivityMainBinding
+    lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
     private lateinit var auth: FirebaseAuth
 
@@ -35,6 +35,6 @@ class MainActivity : AppCompatActivity() {
         navController = navHostFragment.navController
 
         // Setup bottom navigation with NavController
-        binding.navView.setupWithNavController(navController)
+        binding.bottomNavView.setupWithNavController(navController)
     }
 }

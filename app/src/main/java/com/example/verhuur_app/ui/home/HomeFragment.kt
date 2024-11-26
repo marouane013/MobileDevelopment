@@ -20,6 +20,12 @@ import com.example.verhuur_app.model.Product
 import android.graphics.BitmapFactory
 import java.io.File
 import androidx.recyclerview.widget.RecyclerView
+import androidx.navigation.fragment.findNavController
+import com.google.firebase.firestore.Query
+import android.view.View.VISIBLE
+import com.example.verhuur_app.utils.HorizontalSpaceItemDecoration
+import android.view.View.GONE
+import com.example.verhuur_app.MainActivity
 
 class HomeFragment : BaseFragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -40,84 +46,93 @@ class HomeFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         auth = FirebaseAuth.getInstance()
         
-        setupWelcomeMessage()
-        setupCategories()
-        setupRecentItems()
         setupRecyclerView()
-        loadProducts()
+        setupCategoriesRecyclerView()
+        setupClickListeners()
+        loadRecentProducts()
     }
 
-    private fun setupWelcomeMessage() {
-        auth.currentUser?.let { user ->
-            binding.userNameText.text = user.displayName ?: "User"
+    private fun setupClickListeners() {
+        // Zoekbalk click
+        binding.searchCard.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
+        }
+
+        // FAB click
+        binding.addProductFab.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_addProductFragment)
+        }
+
+        // Bekijk alles button
+        binding.seeAllButton.setOnClickListener {
+            findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
         }
     }
 
-    private fun setupCategories() {
-        binding.categoriesRecyclerView.apply {
-            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            adapter = CategoryAdapter(getCategories()) { category ->
-                // Handle category click
-                Toast.makeText(context, "Selected: ${category.name}", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun setupRecentItems() {
-        binding.recentItemsRecyclerView.apply {
-            layoutManager = LinearLayoutManager(
-                requireContext(),
-                LinearLayoutManager.HORIZONTAL,
-                false
-            )
-            adapter = RecentItemsAdapter(getRecentItems()) { item ->
-                Toast.makeText(
-                    requireContext(),
-                    "Selected: ${item.name}",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    }
-
-    private fun setupRecyclerView() {
-        productAdapter = ProductAdapter()
-        binding.productsRecyclerView.apply {
-            this.adapter = productAdapter
-            this.layoutManager = LinearLayoutManager(context)
-        }
-    }
-
-    private fun loadProducts() {
+    private fun loadRecentProducts() {
         val db = FirebaseFirestore.getInstance()
         db.collection("products")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(6)
             .get()
             .addOnSuccessListener { documents ->
                 val productsList = documents.mapNotNull { doc ->
-                    doc.toObject(Product::class.java)
+                    doc.toObject(Product::class.java).apply { id = doc.id }
                 }
                 productAdapter.updateProducts(productsList)
+                
+                // Update de zichtbaarheid van de recyclerView
+                binding.productsRecyclerView.visibility = if (productsList.isEmpty()) GONE else VISIBLE
+                // Toon een leeg-state message indien nodig
+                binding.emptyStateLayout?.visibility = if (productsList.isEmpty()) VISIBLE else GONE
             }
             .addOnFailureListener { exception ->
                 Toast.makeText(context, "Error loading products: ${exception.message}", Toast.LENGTH_LONG).show()
             }
     }
 
-    private fun getCategories() = listOf(
-        Category("Kitchen", R.drawable.ic_kitchen, "#FF6D00"),
-        Category("Garden", R.drawable.ic_garden, "#00C853"),
-        Category("Cleaning", R.drawable.ic_cleaning, "#2962FF"),
-        Category("Tools", R.drawable.ic_tools, "#FF3D00"),
-        Category("Electronics", R.drawable.ic_electronics, "#6200EA"),
-        Category("Sports", R.drawable.ic_sports, "#00BFA5")
-    )
+    private fun setupCategoriesRecyclerView() {
+        val categories = listOf(
+            Category("Gereedschap", R.drawable.ic_tools, "#FF5722"),
+            Category("Tuin", R.drawable.ic_garden, "#4CAF50"),
+            Category("Keuken", R.drawable.ic_kitchen, "#2196F3"),
+            Category("Elektronica", R.drawable.ic_electronics, "#9C27B0"),
+            Category("Sport", R.drawable.ic_sports, "#FF9800"),
+            Category("Schoonmaak", R.drawable.ic_cleaning, "#03A9F4")
+        )
 
-    private fun getRecentItems() = listOf(
-        RentalItem("Professional Drill", "Tools", "€15/day", R.drawable.ic_tools),
-        RentalItem("Lawn Mower", "Garden", "€25/day", R.drawable.ic_garden),
-        RentalItem("Stand Mixer", "Kitchen", "€20/day", R.drawable.ic_kitchen),
-        RentalItem("Pressure Washer", "Cleaning", "€30/day", R.drawable.ic_cleaning)
-    )
+        val categoryAdapter = CategoryAdapter(categories) { category ->
+            val bundle = Bundle().apply {
+                putString("categoryName", category.name)
+            }
+            findNavController().navigate(R.id.action_homeFragment_to_categoryProductsFragment, bundle)
+        }
+
+        binding.categoriesRecyclerView.apply {
+            adapter = categoryAdapter
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+            addItemDecoration(HorizontalSpaceItemDecoration(16))
+        }
+    }
+
+    private fun setupRecyclerView() {
+        productAdapter = ProductAdapter { product ->
+            val bundle = Bundle().apply {
+                putString("productId", product.id)
+                putString("title", product.title)
+                putString("description", product.description)
+                putString("price", product.price.toString())
+                putString("address", product.address)
+                putString("imageUrl", product.imageUrl)
+            }
+            findNavController().navigate(R.id.action_homeFragment_to_productDetailFragment, bundle)
+        }
+        
+        binding.productsRecyclerView.apply {
+            adapter = productAdapter
+            layoutManager = LinearLayoutManager(context)
+        }
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

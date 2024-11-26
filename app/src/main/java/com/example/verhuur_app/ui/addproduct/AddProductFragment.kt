@@ -112,24 +112,37 @@ class AddProductFragment : Fragment() {
         val description = binding.descriptionEditText.text.toString()
         val price = binding.priceEditText.text.toString().toDoubleOrNull()
         val category = binding.categoryAutoComplete.text.toString()
-        val address = binding.addressEditText.text.toString()
+        
+        // Nieuwe adres opbouw
+        val street = binding.streetEditText.text.toString()
+        val houseNumber = binding.houseNumberEditText.text.toString()
+        val city = binding.cityEditText.text.toString()
+        // Voeg België automatisch toe
+        val fullAddress = "$street $houseNumber, $city, Belgium"
 
-        if (validateInput(title, description, price, category, address)) {
-            // Product direct opslaan met lokaal pad naar foto
+        if (validateInput(title, description, price, category, street, houseNumber, city)) {
             val product = Product(
                 title = title,
                 description = description,
                 price = price!!,
                 category = category,
-                address = address,
-                imageUrl = currentPhotoPath, // Gebruik het lokale pad
+                address = fullAddress,  // Gebruik het volledige adres
+                imageUrl = currentPhotoPath,
                 userId = FirebaseAuth.getInstance().currentUser?.uid ?: return
             )
             saveProductToDatabase(product)
         }
     }
 
-    private fun validateInput(title: String, description: String, price: Double?, category: String, address: String): Boolean {
+    private fun validateInput(
+        title: String, 
+        description: String, 
+        price: Double?, 
+        category: String, 
+        street: String,
+        houseNumber: String,
+        city: String
+    ): Boolean {
         if (title.isEmpty()) {
             binding.titleEditText.error = "Vul een titel in"
             return false
@@ -146,8 +159,16 @@ class AddProductFragment : Fragment() {
             binding.categoryAutoComplete.error = "Kies een categorie"
             return false
         }
-        if (address.isEmpty()) {
-            binding.addressEditText.error = "Vul een adres in"
+        if (street.isEmpty()) {
+            binding.streetEditText.error = "Vul een straat in"
+            return false
+        }
+        if (houseNumber.isEmpty()) {
+            binding.houseNumberEditText.error = "Vul een huisnummer in"
+            return false
+        }
+        if (city.isEmpty()) {
+            binding.cityEditText.error = "Vul een stad in"
             return false
         }
         if (!::currentPhotoPath.isInitialized) {

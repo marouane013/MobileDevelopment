@@ -8,7 +8,9 @@ import com.example.verhuur_app.databinding.ItemProductBinding
 import com.example.verhuur_app.model.Product
 import java.io.File
 
-class ProductAdapter : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
+class ProductAdapter(
+    private val onProductClick: (Product) -> Unit
+) : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() {
     
     private var products = listOf<Product>()
 
@@ -30,6 +32,9 @@ class ProductAdapter : RecyclerView.Adapter<ProductAdapter.ProductViewHolder>() 
                         productImage.setImageBitmap(bitmap)
                     }
                 }
+                
+                // Stel de click listener in
+                root.setOnClickListener { onProductClick(product) }
             }
         }
     }

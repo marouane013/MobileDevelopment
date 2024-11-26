@@ -9,12 +9,12 @@
     <item
         android:id="@+id/searchFragment"
         android:icon="@drawable/ic_search"
-        android:title="Search" />
+        android:title="Zoeken" />
 
     <item
         android:id="@+id/addProductFragment"
         android:icon="@drawable/ic_add"
-        android:title="Add Product" />
+        android:title="Add" />
 
     <item
         android:id="@+id/profileFragment"
