@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.MaterialToolbar
 import android.graphics.Color
 import com.example.verhuur_app.databinding.ItemCategoryBinding
-
+/*
 class DashboardActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,4 +79,4 @@ class CategoryAdapter(
     }
 
     override fun getItemCount() = categories.size
-}
+}*/

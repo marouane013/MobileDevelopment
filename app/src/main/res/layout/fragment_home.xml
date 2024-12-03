@@ -82,7 +82,7 @@
                 android:clipToPadding="false"
                 android:paddingHorizontal="4dp"/>
 
-            <!-- Recent toegevoegd -->
+            <!-- Mijn Reserveringen -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -91,19 +91,11 @@
                 android:layout_marginBottom="12dp">
 
                 <TextView
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Recent toegevoegd"
+                    android:text="Mijn Reserveringen"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
                     android:textStyle="bold"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/seeAllButton"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Bekijk alles"/>
 
             </LinearLayout>
 
@@ -130,10 +122,26 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Nog geen producten beschikbaar"
+                    android:text="Je hebt nog geen reserveringen"
                     android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
                     android:layout_marginTop="16dp"/>
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/noReservationsText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Geen reserveringen gevonden"
+                android:visibility="gone"
+                android:gravity="center"
+                android:padding="16dp"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/reservationsRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:padding="8dp"/>
 
         </LinearLayout>
 

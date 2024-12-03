@@ -35,4 +35,20 @@
     <color name="category_tools">#E53935</color>
     <color name="category_electronics">#5E35B1</color>
     <color name="category_sports">#00897B</color>
+
+    <!-- Extra kleuren -->
+    <color name="gray_600">#757575</color>
+
+    <!-- Status kleuren -->
+    <color name="status_available">#4CAF50</color>
+    <color name="status_rented">#F44336</color>
+    <color name="status_pending">#FFC107</color>
+
+    <!-- Category styling -->
+    <color name="stroke_color">#E0E0E0</color>
+    <color name="icon_color">#1E1E1E</color>
+    <color name="text_color">#1E1E1E</color>
+
+    <color name="radius_fill">#1A2196F3</color>
+    <color name="radius_stroke">#2196F3</color>
 </resources>

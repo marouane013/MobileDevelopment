@@ -34,13 +34,6 @@ class CategoryAdapter(
             binding.apply {
                 categoryName.text = category.name
                 categoryIcon.setImageResource(category.iconResId)
-                // Optioneel: achtergrondkleur instellen
-                try {
-                    root.setBackgroundColor(Color.parseColor(category.color))
-                } catch (e: IllegalArgumentException) {
-                    // Fallback kleur als de parsing mislukt
-                    root.setBackgroundColor(Color.GRAY)
-                }
                 root.setOnClickListener { onCategoryClick(category) }
             }
         }

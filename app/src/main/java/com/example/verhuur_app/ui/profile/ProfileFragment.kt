@@ -15,6 +15,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.material.textfield.TextInputEditText
+import androidx.navigation.fragment.findNavController
 
 class ProfileFragment : BaseFragment() {
     private var _binding: FragmentProfileBinding? = null
@@ -37,6 +38,7 @@ class ProfileFragment : BaseFragment() {
         setupUserProfile()
         setupLogoutButton()
         setupEditProfileButton()
+        setupMyProductsButton()
     }
 
     private fun setupUserProfile() {
@@ -82,6 +84,12 @@ class ProfileFragment : BaseFragment() {
             }
 
             dialog.show()
+        }
+    }
+
+    private fun setupMyProductsButton() {
+        binding.myProductsButton.setOnClickListener {
+            findNavController().navigate(R.id.action_profileFragment_to_myProductsFragment)
         }
     }
 

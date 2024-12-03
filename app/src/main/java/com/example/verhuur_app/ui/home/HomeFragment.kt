@@ -6,8 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.verhuur_app.Category
-import com.example.verhuur_app.CategoryAdapter
 import com.example.verhuur_app.R
 import com.example.verhuur_app.databinding.FragmentHomeBinding
 import com.example.verhuur_app.models.RentalItem
@@ -26,6 +24,8 @@ import android.view.View.VISIBLE
 import com.example.verhuur_app.utils.HorizontalSpaceItemDecoration
 import android.view.View.GONE
 import com.example.verhuur_app.MainActivity
+import com.example.verhuur_app.adapters.CategoryAdapter
+import com.example.verhuur_app.model.Category
 
 class HomeFragment : BaseFragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -49,7 +49,6 @@ class HomeFragment : BaseFragment() {
         setupRecyclerView()
         setupCategoriesRecyclerView()
         setupClickListeners()
-        loadRecentProducts()
     }
 
     private fun setupClickListeners() {
@@ -62,43 +61,16 @@ class HomeFragment : BaseFragment() {
         binding.addProductFab.setOnClickListener {
             findNavController().navigate(R.id.action_homeFragment_to_addProductFragment)
         }
-
-        // Bekijk alles button
-        binding.seeAllButton.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
-        }
-    }
-
-    private fun loadRecentProducts() {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("products")
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .limit(6)
-            .get()
-            .addOnSuccessListener { documents ->
-                val productsList = documents.mapNotNull { doc ->
-                    doc.toObject(Product::class.java).apply { id = doc.id }
-                }
-                productAdapter.updateProducts(productsList)
-                
-                // Update de zichtbaarheid van de recyclerView
-                binding.productsRecyclerView.visibility = if (productsList.isEmpty()) GONE else VISIBLE
-                // Toon een leeg-state message indien nodig
-                binding.emptyStateLayout?.visibility = if (productsList.isEmpty()) VISIBLE else GONE
-            }
-            .addOnFailureListener { exception ->
-                Toast.makeText(context, "Error loading products: ${exception.message}", Toast.LENGTH_LONG).show()
-            }
     }
 
     private fun setupCategoriesRecyclerView() {
         val categories = listOf(
-            Category("Gereedschap", R.drawable.ic_tools, "#FF5722"),
-            Category("Tuin", R.drawable.ic_garden, "#4CAF50"),
-            Category("Keuken", R.drawable.ic_kitchen, "#2196F3"),
-            Category("Elektronica", R.drawable.ic_electronics, "#9C27B0"),
-            Category("Sport", R.drawable.ic_sports, "#FF9800"),
-            Category("Schoonmaak", R.drawable.ic_cleaning, "#03A9F4")
+            Category("Gereedschap", R.drawable.ic_tools),
+            Category("Tuin", R.drawable.ic_garden),
+            Category("Keuken", R.drawable.ic_kitchen),
+            Category("Elektronica", R.drawable.ic_electronics),
+            Category("Sport", R.drawable.ic_sports),
+            Category("Schoonmaak", R.drawable.ic_cleaning)
         )
 
         val categoryAdapter = CategoryAdapter(categories) { category ->
@@ -111,7 +83,7 @@ class HomeFragment : BaseFragment() {
         binding.categoriesRecyclerView.apply {
             adapter = categoryAdapter
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
-            addItemDecoration(HorizontalSpaceItemDecoration(16))
+            addItemDecoration(HorizontalSpaceItemDecoration(8))
         }
     }
 
@@ -137,5 +109,29 @@ class HomeFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    fun rentProduct(productId: String, userId: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("products").document(productId)
+            .update("rentedBy", userId)
+            .addOnSuccessListener {
+                // Product succesvol gehuurd
+            }
+            .addOnFailureListener { e ->
+                // Error bij huren
+            }
+    }
+
+    fun stopRenting(productId: String) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("products").document(productId)
+            .update("rentedBy", null)
+            .addOnSuccessListener {
+                // Huur succesvol gestopt
+            }
+            .addOnFailureListener { e ->
+                // Error bij stoppen huur
+            }
     }
 } 

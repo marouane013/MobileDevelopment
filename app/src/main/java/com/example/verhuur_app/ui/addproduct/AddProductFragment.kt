@@ -39,6 +39,8 @@ class AddProductFragment : Fragment() {
     private val binding get() = _binding!!
     private lateinit var currentPhotoPath: String
     private val categories = listOf("Gereedschap", "Tuin", "Keuken", "Elektronica", "Sport", "Schoonmaak")
+    private var productId: String? = null
+    private var isEditing = false
 
     private val takePicture = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success) {
@@ -64,6 +66,16 @@ class AddProductFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        
+        // Check of we in edit mode zijn
+        productId = arguments?.getString("productId")
+        isEditing = arguments?.getBoolean("isEditing") ?: false
+        
+        if (isEditing) {
+            binding.saveButton.text = "Product bijwerken"
+            loadProductDetails()
+        }
+        
         setupCategoryDropdown()
         setupClickListeners()
     }
@@ -178,17 +190,65 @@ class AddProductFragment : Fragment() {
         return true
     }
 
-    private fun saveProductToDatabase(product: com.example.verhuur_app.model.Product) {
+    private fun saveProductToDatabase(product: Product) {
         val db = FirebaseFirestore.getInstance()
-        db.collection("products")
-            .add(product)
-            .addOnSuccessListener {
-                Toast.makeText(context, "Product succesvol toegevoegd", Toast.LENGTH_SHORT).show()
-                findNavController().navigateUp()
-            }
-            .addOnFailureListener { e ->
-                Toast.makeText(context, "Fout bij opslaan: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
+        
+        if (isEditing && productId != null) {
+            // Update existing product
+            db.collection("products")
+                .document(productId!!)
+                .set(product)
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Product bijgewerkt", Toast.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Fout bij bijwerken: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            // Add new product
+            db.collection("products")
+                .add(product)
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Product toegevoegd", Toast.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Fout bij opslaan: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    private fun loadProductDetails() {
+        productId?.let { id ->
+            FirebaseFirestore.getInstance().collection("products")
+                .document(id)
+                .get()
+                .addOnSuccessListener { document ->
+                    val product = document.toObject(Product::class.java)
+                    product?.let { 
+                        binding.apply {
+                            titleEditText.setText(it.title)
+                            descriptionEditText.setText(it.description)
+                            priceEditText.setText(it.price.toString())
+                            categoryAutoComplete.setText(it.category)
+                            // Split address
+                            val addressParts = it.address.split(",")
+                            if (addressParts.size >= 3) {
+                                streetEditText.setText(addressParts[0].trim())
+                                houseNumberEditText.setText(addressParts[1].trim())
+                                cityEditText.setText(addressParts[2].trim())
+                            }
+                            // Load image
+                            if (it.imageUrl.isNotEmpty()) {
+                                currentPhotoPath = it.imageUrl
+                                val bitmap = BitmapFactory.decodeFile(currentPhotoPath)
+                                productImageView.setImageBitmap(bitmap)
+                            }
+                        }
+                    }
+                }
+        }
     }
 
     override fun onDestroyView() {

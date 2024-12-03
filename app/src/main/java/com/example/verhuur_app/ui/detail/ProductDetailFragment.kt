@@ -17,6 +17,14 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import androidx.navigation.fragment.findNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
+import com.google.firebase.firestore.FirebaseFirestore
+import android.widget.Toast
+import com.example.verhuur_app.model.RentalPeriod
+import com.example.verhuur_app.model.RentalStatus
+import com.example.verhuur_app.ui.dialogs.RentProductDialog
+import java.util.*
 
 class ProductDetailFragment : BaseFragment() {
     private var _binding: FragmentProductDetailBinding? = null
@@ -76,6 +84,23 @@ class ProductDetailFragment : BaseFragment() {
                 }
             }
         }
+
+        binding.rentButton.setOnClickListener {
+            showRentDialog()
+        }
+
+        arguments?.getString("productId")?.let { productId ->
+            val db = FirebaseFirestore.getInstance()
+            db.collection("products").document(productId)
+                .get()
+                .addOnSuccessListener { document ->
+                    // Bestaande product details laden
+                    
+                    // Update status
+                    val rentalPeriods = document.get("rentalPeriods") as? List<Map<String, Any>> ?: listOf()
+                    updateProductStatus(rentalPeriods)
+                }
+        }
     }
 
     private fun getLocationFromAddress(address: String) {
@@ -121,5 +146,98 @@ class ProductDetailFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun showRentDialog() {
+        val dialog = RentProductDialog()
+        dialog.setOnRentConfirmedListener { startDate, endDate ->
+            // Check beschikbaarheid voordat we het huurverzoek versturen
+            arguments?.getString("productId")?.let { productId ->
+                checkAvailability(productId, startDate, endDate)
+            }
+        }
+        dialog.show(childFragmentManager, "RentDialog")
+    }
+
+    private fun checkAvailability(productId: String, startDate: Date, endDate: Date) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("products").document(productId)
+            .get()
+            .addOnSuccessListener { document ->
+                val rentalPeriods = document.get("rentalPeriods") as? List<Map<String, Any>> ?: listOf()
+                
+                // Controleer of er overlappende actieve huurperiodes zijn
+                val isAvailable = rentalPeriods.none { period ->
+                    val periodStartDate = (period["startDate"] as com.google.firebase.Timestamp).toDate()
+                    val periodEndDate = (period["endDate"] as com.google.firebase.Timestamp).toDate()
+                    val status = period["status"] as? String
+                    
+                    status == RentalStatus.ACTIVE.name &&
+                    startDate.before(periodEndDate) && endDate.after(periodStartDate)
+                }
+                
+                if (isAvailable) {
+                    rentProduct(startDate, endDate)
+                } else {
+                    Toast.makeText(context, "Product is niet beschikbaar in deze periode", Toast.LENGTH_SHORT).show()
+                }
+            }
+    }
+
+    private fun rentProduct(startDate: Date, endDate: Date) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        if (currentUser == null) {
+            Toast.makeText(context, "Je moet ingelogd zijn om te kunnen huren", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        arguments?.getString("productId")?.let { productId ->
+            val rentalPeriod = RentalPeriod(
+                startDate = startDate,
+                endDate = endDate,
+                rentedBy = currentUser.uid,
+                status = RentalStatus.PENDING
+            )
+
+            val db = FirebaseFirestore.getInstance()
+            db.collection("products").document(productId)
+                .update("rentalPeriods", FieldValue.arrayUnion(rentalPeriod))
+                .addOnSuccessListener {
+                    Toast.makeText(context, "Huurverzoek verzonden", Toast.LENGTH_SHORT).show()
+                    findNavController().navigateUp()
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+    }
+
+    private fun updateProductStatus(rentalPeriods: List<Map<String, Any>>) {
+        val activeRental = rentalPeriods.find { period ->
+            val status = period["status"] as? String
+            status == RentalStatus.ACTIVE.name
+        }
+        
+        binding.statusText.apply {
+            when {
+                activeRental != null -> {
+                    text = "Verhuurd"
+                    setBackgroundColor(resources.getColor(R.color.status_rented, null))
+                }
+                rentalPeriods.any { it["status"] as? String == RentalStatus.PENDING.name } -> {
+                    text = "In aanvraag"
+                    setBackgroundColor(resources.getColor(R.color.status_pending, null))
+                }
+                else -> {
+                    text = "Beschikbaar"
+                    setBackgroundColor(resources.getColor(R.color.status_available, null))
+                }
+            }
+        }
+        
+        binding.rentButton.apply {
+            isEnabled = activeRental == null
+            alpha = if (isEnabled) 1.0f else 0.5f
+        }
     }
 } 

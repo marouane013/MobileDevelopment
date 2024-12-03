@@ -82,6 +82,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore:24.0.2")
     implementation ("com.github.bumptech.glide:glide:4.15.1")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.1")
 
 
     implementation ("androidx.navigation:navigation-fragment-ktx:2.7.7")

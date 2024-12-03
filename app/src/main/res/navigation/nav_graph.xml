@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
     app:startDestination="@id/homeFragment">
 
@@ -64,5 +65,34 @@
         android:id="@+id/productDetailFragment"
         android:name="com.example.verhuur_app.ui.detail.ProductDetailFragment"
         android:label="Product Details" />
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.verhuur_app.ui.notifications.NotificationsFragment"
+        android:label="Huurverzoeken"
+        tools:layout="@layout/fragment_notifications" />
+
+    <action
+        android:id="@+id/action_profileFragment_to_myProductsFragment"
+        app:destination="@id/myProductsFragment" />
+
+    <fragment
+        android:id="@+id/myProductsFragment"
+        android:name="com.example.verhuur_app.ui.profile.MyProductsFragment"
+        android:label="Mijn Producten">
+        <action
+            android:id="@+id/action_myProductsFragment_to_addProductFragment"
+            app:destination="@id/addProductFragment">
+            <argument
+                android:name="productId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
+            <argument
+                android:name="isEditing"
+                android:defaultValue="false"
+                app:argType="boolean" />
+        </action>
+    </fragment>
 
 </navigation> 
