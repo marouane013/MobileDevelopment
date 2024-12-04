@@ -71,8 +71,20 @@ class ProfileFragment : BaseFragment() {
                 .setView(dialogView)
                 .create()
 
+            val addAddressButton = dialogView.findViewById<MaterialButton>(R.id.addAddressButton)
+            
+            // Check if user has an address
+            val userId = auth.currentUser?.uid
+            userId?.let { uid ->
+                FirebaseFirestore.getInstance().collection("users").document(uid)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        val existingAddress = document.getString("address")
+                        addAddressButton.text = if (existingAddress != null) "Edit Address" else "Add Address"
+                    }
+            }
+
             dialogView.findViewById<MaterialButton>(R.id.addAddressButton).setOnClickListener {
-                // Handle add address logic
                 dialog.dismiss()
                 showAddAddressDialog()
             }
@@ -98,6 +110,30 @@ class ProfileFragment : BaseFragment() {
         val dialog = AlertDialog.Builder(requireContext())
             .setView(dialogView)
             .create()
+
+        // Get existing address if available
+        val userId = auth.currentUser?.uid
+        userId?.let { uid ->
+            FirebaseFirestore.getInstance().collection("users").document(uid)
+                .get()
+                .addOnSuccessListener { document ->
+                    val existingAddress = document.getString("address")
+                    existingAddress?.let { address ->
+                        // Parse existing address
+                        val parts = address.split(",").map { it.trim() }
+                        if (parts.size >= 3) {
+                            val streetAndNumber = parts[0].split(" ")
+                            val street = streetAndNumber.dropLast(1).joinToString(" ")
+                            val number = streetAndNumber.last()
+                            val city = parts[1]
+
+                            dialogView.findViewById<TextInputEditText>(R.id.addressInput).setText(street)
+                            dialogView.findViewById<TextInputEditText>(R.id.numberInput).setText(number)
+                            dialogView.findViewById<TextInputEditText>(R.id.cityInput).setText(city)
+                        }
+                    }
+                }
+        }
 
         dialogView.findViewById<MaterialButton>(R.id.saveAddressButton).setOnClickListener {
             val straat = dialogView.findViewById<TextInputEditText>(R.id.addressInput).text.toString()

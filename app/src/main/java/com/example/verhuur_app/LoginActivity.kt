@@ -25,8 +25,12 @@ class LoginActivity : AppCompatActivity() {
             if (email.isNotEmpty() && password.isNotEmpty()) {
                 loginUser(email, password)
             } else {
-                Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Vul alle velden in", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        binding.registerButton.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
@@ -34,14 +38,14 @@ class LoginActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password)
             .addOnCompleteListener(this) { task ->
                 if (task.isSuccessful) {
-                    Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Inloggen gelukt", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this, MainActivity::class.java)
                     startActivity(intent)
                     finish()
                 } else {
                     Toast.makeText(
                         this,
-                        "Login failed: ${task.exception?.message}",
+                        "Inloggen mislukt: ${task.exception?.message}",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
