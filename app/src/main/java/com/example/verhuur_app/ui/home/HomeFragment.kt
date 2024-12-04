@@ -1,5 +1,6 @@
 package com.example.verhuur_app.ui.home
 
+import MyRequestsAdapter
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +29,14 @@ import com.example.verhuur_app.adapters.CategoryAdapter
 import com.example.verhuur_app.adapters.ReservationsAdapter
 import com.example.verhuur_app.model.Category
 import com.example.verhuur_app.model.RentalStatus
+import androidx.appcompat.app.AlertDialog
+import android.widget.TextView
+import com.example.verhuur_app.model.RentalPeriod
+import android.graphics.Color
+import android.text.format.DateFormat
+import java.text.SimpleDateFormat
+import java.util.*
+import com.google.android.material.button.MaterialButton
 
 class HomeFragment : BaseFragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -52,6 +61,7 @@ class HomeFragment : BaseFragment() {
         setupCategoryAdapter()
         setupReservationsAdapter()
         loadUserReservations()
+        setupMyRequestsButton()
     }
 
     private fun setupCategoryAdapter() {
@@ -115,6 +125,104 @@ class HomeFragment : BaseFragment() {
                 binding.noReservationsText.visibility = 
                     if (reservations.isEmpty()) View.VISIBLE else View.GONE
             }
+    }
+
+    private fun setupMyRequestsButton() {
+        binding.myRequestsButton.setOnClickListener {
+            showMyRequestsDialog()
+        }
+    }
+
+    private fun showMyRequestsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_my_requests, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.requestsRecyclerView)
+        val noRequestsText = dialogView.findViewById<TextView>(R.id.noRequestsText)
+        
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        
+        // Load user's rental requests
+        val currentUser = auth.currentUser?.uid
+        currentUser?.let { uid ->
+            FirebaseFirestore.getInstance().collection("products")
+                .get()
+                .addOnSuccessListener { documents ->
+                    val requests = mutableListOf<Pair<Product, RentalPeriod>>()
+                    
+                    for (doc in documents) {
+                        val product = doc.toObject(Product::class.java).apply { id = doc.id }
+                        val rentalPeriods = product.rentalPeriods
+                        
+                        rentalPeriods.forEach { period ->
+                            if (period.rentedBy == uid) {
+                                requests.add(product to period)
+                            }
+                        }
+                    }
+
+                    if (requests.isEmpty()) {
+                        noRequestsText.visibility = View.VISIBLE
+                        recyclerView.visibility = View.GONE
+                    } else {
+                        noRequestsText.visibility = View.GONE
+                        recyclerView.visibility = View.VISIBLE
+                        
+                        recyclerView.adapter = MyRequestsAdapter(requests) { product, rentalPeriod ->
+                            showRentalRequestDetails(product, rentalPeriod)
+                            dialog.dismiss()
+                        }
+                    }
+                }
+        }
+
+        dialog.show()
+    }
+
+    private fun showRentalRequestDetails(product: Product, rentalPeriod: RentalPeriod) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_rental_request_details, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialogView.apply {
+            findViewById<TextView>(R.id.productTitle).text = product.title
+            findViewById<TextView>(R.id.productPrice).text = "€${product.price}/dag"
+            findViewById<TextView>(R.id.productAddress).text = product.address
+
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val period = "${dateFormat.format(rentalPeriod.startDate)} - ${dateFormat.format(rentalPeriod.endDate)}"
+            findViewById<TextView>(R.id.rentalPeriod).text = period
+
+            val statusText = findViewById<TextView>(R.id.requestStatus)
+            statusText.text = when (rentalPeriod.status) {
+                "PENDING" -> "In aanvraag"
+                "ACTIVE" -> "Actief"
+                "COMPLETED" -> "Afgerond"
+                "CANCELLED" -> "Afgewezen"
+                else -> "Afgewezen"
+            }
+            
+            statusText.setBackgroundColor(when (rentalPeriod.status) {
+                "PENDING" -> Color.parseColor("#FFA000")
+                "ACTIVE" -> Color.parseColor("#4CAF50")
+                "COMPLETED" -> Color.parseColor("#757575")
+                "CANCELLED" -> Color.parseColor("#F44336")
+                else -> Color.parseColor("#F44336")
+            })
+
+            findViewById<MaterialButton>(R.id.viewProductButton).setOnClickListener {
+                dialog.dismiss()
+                val bundle = Bundle().apply {
+                    putString("productId", product.id)
+                }
+                findNavController().navigate(R.id.action_homeFragment_to_productDetailFragment, bundle)
+            }
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {

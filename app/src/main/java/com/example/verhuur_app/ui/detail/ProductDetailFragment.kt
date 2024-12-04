@@ -21,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import android.widget.Toast
+import com.example.verhuur_app.model.Product
 import com.example.verhuur_app.model.RentalPeriod
 import com.example.verhuur_app.model.RentalStatus
 import com.example.verhuur_app.ui.dialogs.RentProductDialog
@@ -42,7 +43,49 @@ class ProductDetailFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        
+        setupMap()
+
+        arguments?.getString("productId")?.let { productId ->
+            val db = FirebaseFirestore.getInstance()
+            db.collection("products").document(productId)
+                .get()
+                .addOnSuccessListener { document ->
+                    val product = document.toObject(Product::class.java)
+                    product?.let {
+                        binding.apply {
+                            productTitle.text = it.title
+                            productDescription.text = it.description
+                            productPrice.text = "€${it.price}/dag"
+                            productAddress.text = it.address
+                            
+                            // Load image using Glide
+                            if (it.imageUrl.isNotEmpty()) {
+                                Glide.with(requireContext())
+                                    .load(it.imageUrl)
+                                    .transition(DrawableTransitionOptions.withCrossFade())
+                                    .centerCrop()
+                                    .into(productImage)
+                            }
+
+                            // Get location from address
+                            getLocationFromAddress(it.address)
+                            
+                            // Update rental periods and status
+                            updateProductStatus(it.rentalPeriods)
+                        }
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Error loading product: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        binding.rentButton.setOnClickListener {
+            showRentDialog()
+        }
+    }
+
+    private fun setupMap() {
         // Setup back button
         binding.toolbar.setNavigationOnClickListener {
             findNavController().navigateUp()
@@ -58,49 +101,6 @@ class ProductDetailFragment : BaseFragment() {
         mapView = binding.mapView
         mapView?.setTileSource(TileSourceFactory.MAPNIK)
         mapView?.setMultiTouchControls(true)
-        
-        // Load product data
-        arguments?.let { args ->
-            binding.apply {
-                productTitle.text = args.getString("title")
-                productDescription.text = args.getString("description")
-                productPrice.text = "€${args.getString("price")}"
-                productAddress.text = args.getString("address")
-                
-                // Load image using Glide
-                args.getString("imageUrl")?.let { url ->
-                    Glide.with(requireContext())
-                        .load(url)
-                        .transition(DrawableTransitionOptions.withCrossFade())
-                        .centerCrop()
-                        .placeholder(R.drawable.placeholder_image)
-                        .error(R.drawable.placeholder_image)
-                        .into(productImage)
-                }
-
-                // Get location from address
-                args.getString("address")?.let { address ->
-                    getLocationFromAddress(address)
-                }
-            }
-        }
-
-        binding.rentButton.setOnClickListener {
-            showRentDialog()
-        }
-
-        arguments?.getString("productId")?.let { productId ->
-            val db = FirebaseFirestore.getInstance()
-            db.collection("products").document(productId)
-                .get()
-                .addOnSuccessListener { document ->
-                    // Bestaande product details laden
-                    
-                    // Update status
-                    val rentalPeriods = document.get("rentalPeriods") as? List<Map<String, Any>> ?: listOf()
-                    updateProductStatus(rentalPeriods)
-                }
-        }
     }
 
     private fun getLocationFromAddress(address: String) {
@@ -212,10 +212,9 @@ class ProductDetailFragment : BaseFragment() {
         }
     }
 
-    private fun updateProductStatus(rentalPeriods: List<Map<String, Any>>) {
+    private fun updateProductStatus(rentalPeriods: List<RentalPeriod>) {
         val activeRental = rentalPeriods.find { period ->
-            val status = period["status"] as? String
-            status == RentalStatus.ACTIVE.name
+            period.status == "ACTIVE"
         }
         
         binding.statusText.apply {
@@ -224,7 +223,7 @@ class ProductDetailFragment : BaseFragment() {
                     text = "Verhuurd"
                     setBackgroundColor(resources.getColor(R.color.status_rented, null))
                 }
-                rentalPeriods.any { it["status"] as? String == RentalStatus.PENDING.name } -> {
+                rentalPeriods.any { it.status == "PENDING" } -> {
                     text = "In aanvraag"
                     setBackgroundColor(resources.getColor(R.color.status_pending, null))
                 }
