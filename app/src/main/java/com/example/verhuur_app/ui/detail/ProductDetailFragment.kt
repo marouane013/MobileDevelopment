@@ -196,7 +196,7 @@ class ProductDetailFragment : BaseFragment() {
                 startDate = startDate,
                 endDate = endDate,
                 rentedBy = currentUser.uid,
-                status = RentalStatus.PENDING
+                status = "PENDING"
             )
 
             val db = FirebaseFirestore.getInstance()

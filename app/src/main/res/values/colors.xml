@@ -51,4 +51,6 @@
 
     <color name="radius_fill">#1A2196F3</color>
     <color name="radius_stroke">#2196F3</color>
+
+    <!-- Voeg toe aan je bestaande colors.xml -->
 </resources>

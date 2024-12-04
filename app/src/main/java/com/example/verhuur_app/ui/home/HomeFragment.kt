@@ -25,13 +25,16 @@ import com.example.verhuur_app.utils.HorizontalSpaceItemDecoration
 import android.view.View.GONE
 import com.example.verhuur_app.MainActivity
 import com.example.verhuur_app.adapters.CategoryAdapter
+import com.example.verhuur_app.adapters.ReservationsAdapter
 import com.example.verhuur_app.model.Category
+import com.example.verhuur_app.model.RentalStatus
 
 class HomeFragment : BaseFragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
-    private lateinit var productAdapter: ProductAdapter
+    private lateinit var reservationsAdapter: ReservationsAdapter
+    private lateinit var categoryAdapter: CategoryAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,34 +49,22 @@ class HomeFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         auth = FirebaseAuth.getInstance()
         
-        setupRecyclerView()
-        setupCategoriesRecyclerView()
-        setupClickListeners()
+        setupCategoryAdapter()
+        setupReservationsAdapter()
+        loadUserReservations()
     }
 
-    private fun setupClickListeners() {
-        // Zoekbalk click
-        binding.searchCard.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_searchFragment)
-        }
-
-        // FAB click
-        binding.addProductFab.setOnClickListener {
-            findNavController().navigate(R.id.action_homeFragment_to_addProductFragment)
-        }
-    }
-
-    private fun setupCategoriesRecyclerView() {
+    private fun setupCategoryAdapter() {
         val categories = listOf(
-            Category("Gereedschap", R.drawable.ic_tools),
-            Category("Tuin", R.drawable.ic_garden),
-            Category("Keuken", R.drawable.ic_kitchen),
-            Category("Elektronica", R.drawable.ic_electronics),
-            Category("Sport", R.drawable.ic_sports),
-            Category("Schoonmaak", R.drawable.ic_cleaning)
+            Category("Tuin", R.drawable.img_garden),
+            Category("Schoonmaak", R.drawable.img_cleaning),
+            Category("Gereedschap", R.drawable.img_tools),
+            Category("Electronica", R.drawable.img_electronics),
+            Category("Sport", R.drawable.img_sports),
+            Category("Keuken", R.drawable.img_kitchen)
         )
 
-        val categoryAdapter = CategoryAdapter(categories) { category ->
+        categoryAdapter = CategoryAdapter(categories) { category ->
             val bundle = Bundle().apply {
                 putString("categoryName", category.name)
             }
@@ -87,51 +78,47 @@ class HomeFragment : BaseFragment() {
         }
     }
 
-    private fun setupRecyclerView() {
-        productAdapter = ProductAdapter { product ->
+    private fun setupReservationsAdapter() {
+        reservationsAdapter = ReservationsAdapter { product ->
             val bundle = Bundle().apply {
                 putString("productId", product.id)
-                putString("title", product.title)
-                putString("description", product.description)
-                putString("price", product.price.toString())
-                putString("address", product.address)
-                putString("imageUrl", product.imageUrl)
             }
             findNavController().navigate(R.id.action_homeFragment_to_productDetailFragment, bundle)
         }
         
-        binding.productsRecyclerView.apply {
-            adapter = productAdapter
+        binding.reservationsRecyclerView.apply {
+            adapter = reservationsAdapter
             layoutManager = LinearLayoutManager(context)
         }
+    }
+
+    private fun loadUserReservations() {
+        val currentUser = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
+        FirebaseFirestore.getInstance().collection("products")
+            .get()
+            .addOnSuccessListener { documents ->
+                if (!isAdded || _binding == null) return@addOnSuccessListener
+                
+                val reservations = documents.mapNotNull { doc ->
+                    val product = doc.toObject(Product::class.java).also { it.id = doc.id }
+                    val hasActiveRental = product.rentalPeriods.any { period ->
+                        period.rentedBy == currentUser && 
+                        (period.status == "ACTIVE" || period.status == "PENDING")
+                    }
+                    if (hasActiveRental) product else null
+                }
+                
+                reservationsAdapter.updateReservations(reservations)
+                binding.reservationsRecyclerView.visibility = 
+                    if (reservations.isEmpty()) View.GONE else View.VISIBLE
+                binding.noReservationsText.visibility = 
+                    if (reservations.isEmpty()) View.VISIBLE else View.GONE
+            }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
-    }
-
-    fun rentProduct(productId: String, userId: String) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("products").document(productId)
-            .update("rentedBy", userId)
-            .addOnSuccessListener {
-                // Product succesvol gehuurd
-            }
-            .addOnFailureListener { e ->
-                // Error bij huren
-            }
-    }
-
-    fun stopRenting(productId: String) {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("products").document(productId)
-            .update("rentedBy", null)
-            .addOnSuccessListener {
-                // Huur succesvol gestopt
-            }
-            .addOnFailureListener { e ->
-                // Error bij stoppen huur
-            }
     }
 } 
