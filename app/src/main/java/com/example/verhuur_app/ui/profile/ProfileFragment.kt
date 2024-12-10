@@ -1,5 +1,6 @@
 package com.example.verhuur_app.ui.profile
 
+import MyRequestsAdapter
 import Review
 import ReviewsAdapter
 import android.app.AlertDialog
@@ -22,12 +23,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.Query
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.example.verhuur_app.model.Product
+import com.example.verhuur_app.model.RentalPeriod
+import java.text.SimpleDateFormat
+import java.util.*
 
 class ProfileFragment : BaseFragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
-    private lateinit var reviewsAdapter: ReviewsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,9 +50,8 @@ class ProfileFragment : BaseFragment() {
         setupLogoutButton()
         setupEditProfileButton()
         setupMyProductsButton()
-        setupReviewsRecyclerView()
-        loadUserReviews()
         setupMyReviewsButton()
+        setupMyRentalsButton()
     }
 
     private fun setupUserProfile() {
@@ -115,51 +118,15 @@ class ProfileFragment : BaseFragment() {
         }
     }
 
-    private fun setupReviewsRecyclerView() {
-        reviewsAdapter = ReviewsAdapter()
-        binding.reviewsRecyclerView.apply {
-            adapter = reviewsAdapter
-            layoutManager = LinearLayoutManager(context)
-        }
-    }
-
-    private fun loadUserReviews() {
-        val currentUser = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        
-        // Get all products owned by the current user
-        FirebaseFirestore.getInstance().collection("products")
-            .whereEqualTo("userId", currentUser)
-            .get()
-            .addOnSuccessListener { productDocuments ->
-                val productIds = productDocuments.documents.map { it.id }
-                
-                if (productIds.isEmpty()) {
-                    binding.noReviewsText.visibility = View.VISIBLE
-                    binding.reviewsRecyclerView.visibility = View.GONE
-                    return@addOnSuccessListener
-                }
-
-                // Get all reviews for these products
-                FirebaseFirestore.getInstance().collection("reviews")
-                    .whereIn("productId", productIds)
-                    .orderBy("createdAt", Query.Direction.DESCENDING)
-                    .get()
-                    .addOnSuccessListener { reviewDocuments ->
-                        val reviews = reviewDocuments.mapNotNull { doc ->
-                            doc.toObject(Review::class.java).copy(id = doc.id)
-                        }
-                        
-                        reviewsAdapter.updateReviews(reviews)
-                        
-                        binding.noReviewsText.visibility = if (reviews.isEmpty()) View.VISIBLE else View.GONE
-                        binding.reviewsRecyclerView.visibility = if (reviews.isEmpty()) View.GONE else View.VISIBLE
-                    }
-            }
-    }
-
     private fun setupMyReviewsButton() {
         binding.myReviewsButton.setOnClickListener {
             showMyReviewsDialog()
+        }
+    }
+
+    private fun setupMyRentalsButton() {
+        binding.myRentalsButton.setOnClickListener {
+            showMyRentalsDialog()
         }
     }
 
@@ -288,6 +255,86 @@ class ProfileFragment : BaseFragment() {
                     }
                 }
         }
+    }
+
+    private fun showMyRentalsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_my_rentals, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.myRentalsRecyclerView)
+        val noRentalsText = dialogView.findViewById<TextView>(R.id.noRentalsText)
+        
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        val rentalsAdapter = MyRequestsAdapter(emptyList()) { product, rentalPeriod -> 
+            // Hergebruik MyRequestsAdapter voor consistente weergave
+            showRentalDetails(product, rentalPeriod)
+        }
+        recyclerView.adapter = rentalsAdapter
+
+        // Laad verhuurde producten van de huidige gebruiker
+        val currentUser = auth.currentUser?.uid
+        currentUser?.let { uid ->
+            FirebaseFirestore.getInstance().collection("products")
+                .whereEqualTo("userId", uid)
+                .get()
+                .addOnSuccessListener { documents ->
+                    val rentals = mutableListOf<Pair<Product, RentalPeriod>>()
+                    
+                    for (doc in documents) {
+                        val product = doc.toObject(Product::class.java).apply { id = doc.id }
+                        val activeRentals = product.rentalPeriods.filter { period ->
+                            period.status == "ACTIVE" || period.status == "PENDING" || 
+                            period.status == "COMPLETED"
+                        }
+                        activeRentals.forEach { period ->
+                            rentals.add(product to period)
+                        }
+                    }
+
+                    if (rentals.isEmpty()) {
+                        noRentalsText.visibility = View.VISIBLE
+                        recyclerView.visibility = View.GONE
+                    } else {
+                        noRentalsText.visibility = View.GONE
+                        recyclerView.visibility = View.VISIBLE
+                        (recyclerView.adapter as MyRequestsAdapter).updateRequests(rentals)
+                    }
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Fout bij ophalen verhuuringen: ${e.message}", 
+                        Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        dialog.show()
+    }
+
+    private fun showRentalDetails(product: Product, rentalPeriod: RentalPeriod) {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_rental_details, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        dialogView.apply {
+            findViewById<TextView>(R.id.productTitle).text = product.title
+            findViewById<TextView>(R.id.renterName).text = "Gehuurd door: ${rentalPeriod.rentedBy}"
+            
+            val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+            val period = "${dateFormat.format(rentalPeriod.startDate)} - ${dateFormat.format(rentalPeriod.endDate)}"
+            findViewById<TextView>(R.id.rentalPeriod).text = "Periode: $period"
+            
+            val statusText = findViewById<TextView>(R.id.statusText)
+            statusText.text = when(rentalPeriod.status) {
+                "PENDING" -> "In aanvraag"
+                "ACTIVE" -> "Actief"
+                "COMPLETED" -> "Afgerond"
+                else -> "Afgewezen"
+            }
+        }
+
+        dialog.show()
     }
 
     override fun onDestroyView() {

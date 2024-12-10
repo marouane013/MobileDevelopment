@@ -9,11 +9,16 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 
 class MyRequestsAdapter(
-    private val requests: List<Pair<Product, RentalPeriod>>,
+    private var requests: List<Pair<Product, RentalPeriod>>,
     private val onItemClick: (Product, RentalPeriod) -> Unit
 ) : RecyclerView.Adapter<MyRequestsAdapter.ViewHolder>() {
 
-    class ViewHolder(val binding: ItemMyRequestBinding) : RecyclerView.ViewHolder(binding.root)
+    fun updateRequests(newRequests: List<Pair<Product, RentalPeriod>>) {
+        requests = newRequests
+        notifyDataSetChanged()
+    }
+
+    inner class ViewHolder(val binding: ItemMyRequestBinding) : RecyclerView.ViewHolder(binding.root)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemMyRequestBinding.inflate(
