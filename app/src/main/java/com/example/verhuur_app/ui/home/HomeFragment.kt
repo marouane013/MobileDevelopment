@@ -34,9 +34,14 @@ import android.widget.TextView
 import com.example.verhuur_app.model.RentalPeriod
 import android.graphics.Color
 import android.text.format.DateFormat
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.RatingBar
 import java.text.SimpleDateFormat
 import java.util.*
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.firestore.FieldValue
 
 class HomeFragment : BaseFragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -89,12 +94,17 @@ class HomeFragment : BaseFragment() {
     }
 
     private fun setupReservationsAdapter() {
-        reservationsAdapter = ReservationsAdapter { product ->
-            val bundle = Bundle().apply {
-                putString("productId", product.id)
+        reservationsAdapter = ReservationsAdapter(
+            onItemClick = { product ->
+                val bundle = Bundle().apply {
+                    putString("productId", product.id)
+                }
+                findNavController().navigate(R.id.action_homeFragment_to_productDetailFragment, bundle)
+            },
+            onEndRental = { product, rentalPeriod ->
+                showEndRentalConfirmationDialog(product, rentalPeriod)
             }
-            findNavController().navigate(R.id.action_homeFragment_to_productDetailFragment, bundle)
-        }
+        )
         
         binding.reservationsRecyclerView.apply {
             adapter = reservationsAdapter
@@ -220,9 +230,86 @@ class HomeFragment : BaseFragment() {
                 }
                 findNavController().navigate(R.id.action_homeFragment_to_productDetailFragment, bundle)
             }
+
+            // Show rating layout only for completed rentals
+            val ratingLayout = findViewById<LinearLayout>(R.id.ratingLayout)
+            ratingLayout.visibility = if (rentalPeriod.status == "COMPLETED") View.VISIBLE else View.GONE
+
+            findViewById<Button>(R.id.submitReviewButton)?.setOnClickListener {
+                val rating = findViewById<RatingBar>(R.id.ratingBar).rating
+                val review = findViewById<TextInputEditText>(R.id.reviewText).text.toString()
+                
+                submitReview(product.id, rentalPeriod, rating, review)
+                dialog.dismiss()
+            }
         }
 
         dialog.show()
+    }
+
+    private fun submitReview(productId: String, rentalPeriod: RentalPeriod, rating: Float, review: String) {
+        val db = FirebaseFirestore.getInstance()
+        val currentUser = auth.currentUser
+        
+        db.collection("products").document(productId)
+            .get()
+            .addOnSuccessListener { document ->
+                val product = document.toObject(Product::class.java)
+                
+                val reviewData = hashMapOf(
+                    "productId" to productId,
+                    "productTitle" to (product?.title ?: ""),
+                    "productOwnerId" to (product?.userId ?: ""),
+                    "renterId" to rentalPeriod.rentedBy,
+                    "renterName" to (currentUser?.displayName ?: "Anoniem"),
+                    "rating" to rating,
+                    "review" to review,
+                    "createdAt" to FieldValue.serverTimestamp()
+                )
+
+                db.collection("reviews")
+                    .add(reviewData)
+                    .addOnSuccessListener {
+                        Toast.makeText(context, "Review geplaatst", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(context, "Fout bij plaatsen review: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+    }
+
+    private fun showEndRentalConfirmationDialog(product: Product, rentalPeriod: RentalPeriod) {
+        AlertDialog.Builder(requireContext())
+            .setTitle("Beëindig verhuur")
+            .setMessage("Weet je zeker dat je deze verhuur wilt beëindigen?")
+            .setPositiveButton("Ja") { _, _ ->
+                endRental(product, rentalPeriod)
+            }
+            .setNegativeButton("Nee", null)
+            .show()
+    }
+
+    private fun endRental(product: Product, rentalPeriod: RentalPeriod) {
+        val db = FirebaseFirestore.getInstance()
+        
+        // Find and update the specific rental period
+        val updatedRentalPeriods = product.rentalPeriods.map { period ->
+            if (period == rentalPeriod) {
+                period.copy(status = "COMPLETED")
+            } else {
+                period
+            }
+        }
+
+        db.collection("products").document(product.id)
+            .update("rentalPeriods", updatedRentalPeriods)
+            .addOnSuccessListener {
+                Toast.makeText(context, "Verhuur succesvol beëindigd", Toast.LENGTH_SHORT).show()
+                loadUserReservations() // Reload the reservations
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(context, "Fout bij beëindigen verhuur: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
     override fun onDestroyView() {

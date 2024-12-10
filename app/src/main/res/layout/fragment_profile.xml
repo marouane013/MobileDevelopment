@@ -43,10 +43,40 @@
         android:text="Mijn Producten"/>
 
     <Button
+        android:id="@+id/myReviewsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Mijn Reviews"/>
+
+    <Button
         android:id="@+id/logoutButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Uitloggen"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Reviews"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/reviewsRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <TextView
+        android:id="@+id/noReviewsText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Nog geen reviews ontvangen"
+        android:gravity="center"
+        android:visibility="gone"
+        android:padding="16dp"/>
 
 </LinearLayout> 

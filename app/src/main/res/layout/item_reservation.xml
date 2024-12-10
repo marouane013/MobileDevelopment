@@ -39,6 +39,15 @@
             android:layout_marginTop="4dp"
             android:textAppearance="?attr/textAppearanceBody2"/>
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/endRentalButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Beëindig verhuur"
+            android:visibility="gone"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView> 

@@ -1,5 +1,7 @@
 package com.example.verhuur_app.ui.profile
 
+import Review
+import ReviewsAdapter
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
@@ -16,11 +18,16 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.material.textfield.TextInputEditText
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.firestore.Query
+import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 
 class ProfileFragment : BaseFragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
     private lateinit var auth: FirebaseAuth
+    private lateinit var reviewsAdapter: ReviewsAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,6 +46,9 @@ class ProfileFragment : BaseFragment() {
         setupLogoutButton()
         setupEditProfileButton()
         setupMyProductsButton()
+        setupReviewsRecyclerView()
+        loadUserReviews()
+        setupMyReviewsButton()
     }
 
     private fun setupUserProfile() {
@@ -103,6 +113,91 @@ class ProfileFragment : BaseFragment() {
         binding.myProductsButton.setOnClickListener {
             findNavController().navigate(R.id.action_profileFragment_to_myProductsFragment)
         }
+    }
+
+    private fun setupReviewsRecyclerView() {
+        reviewsAdapter = ReviewsAdapter()
+        binding.reviewsRecyclerView.apply {
+            adapter = reviewsAdapter
+            layoutManager = LinearLayoutManager(context)
+        }
+    }
+
+    private fun loadUserReviews() {
+        val currentUser = FirebaseAuth.getInstance().currentUser?.uid ?: return
+        
+        // Get all products owned by the current user
+        FirebaseFirestore.getInstance().collection("products")
+            .whereEqualTo("userId", currentUser)
+            .get()
+            .addOnSuccessListener { productDocuments ->
+                val productIds = productDocuments.documents.map { it.id }
+                
+                if (productIds.isEmpty()) {
+                    binding.noReviewsText.visibility = View.VISIBLE
+                    binding.reviewsRecyclerView.visibility = View.GONE
+                    return@addOnSuccessListener
+                }
+
+                // Get all reviews for these products
+                FirebaseFirestore.getInstance().collection("reviews")
+                    .whereIn("productId", productIds)
+                    .orderBy("createdAt", Query.Direction.DESCENDING)
+                    .get()
+                    .addOnSuccessListener { reviewDocuments ->
+                        val reviews = reviewDocuments.mapNotNull { doc ->
+                            doc.toObject(Review::class.java).copy(id = doc.id)
+                        }
+                        
+                        reviewsAdapter.updateReviews(reviews)
+                        
+                        binding.noReviewsText.visibility = if (reviews.isEmpty()) View.VISIBLE else View.GONE
+                        binding.reviewsRecyclerView.visibility = if (reviews.isEmpty()) View.GONE else View.VISIBLE
+                    }
+            }
+    }
+
+    private fun setupMyReviewsButton() {
+        binding.myReviewsButton.setOnClickListener {
+            showMyReviewsDialog()
+        }
+    }
+
+    private fun showMyReviewsDialog() {
+        val dialogView = layoutInflater.inflate(R.layout.dialog_my_reviews, null)
+        val dialog = AlertDialog.Builder(requireContext())
+            .setView(dialogView)
+            .create()
+
+        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.myReviewsRecyclerView)
+        val noReviewsText = dialogView.findViewById<TextView>(R.id.noMyReviewsText)
+        
+        recyclerView.layoutManager = LinearLayoutManager(context)
+        val reviewsAdapter = ReviewsAdapter()
+        recyclerView.adapter = reviewsAdapter
+
+        // Load reviews for products owned by current user
+        val currentUser = auth.currentUser?.uid
+        currentUser?.let { uid ->
+            FirebaseFirestore.getInstance().collection("reviews")
+                .whereEqualTo("productOwnerId", uid)
+                .get()
+                .addOnSuccessListener { reviewDocuments ->
+                    val reviews = reviewDocuments.mapNotNull { doc ->
+                        doc.toObject(Review::class.java).copy(id = doc.id)
+                    }
+                    
+                    reviewsAdapter.updateReviews(reviews)
+                    
+                    noReviewsText.visibility = if (reviews.isEmpty()) View.VISIBLE else View.GONE
+                    recyclerView.visibility = if (reviews.isEmpty()) View.GONE else View.VISIBLE
+                }
+                .addOnFailureListener { e ->
+                    Toast.makeText(context, "Fout bij ophalen reviews: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        }
+
+        dialog.show()
     }
 
     private fun showAddAddressDialog() {
