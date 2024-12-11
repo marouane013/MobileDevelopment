@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <!-- Top-level destinations -->
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.verhuur_app.ui.home.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_homeFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_addProductFragment"
+            app:destination="@id/addProductFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_categoryProductsFragment"
+            app:destination="@id/categoryProductsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_productDetailFragment"
+            app:destination="@id/productDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/categoryProductsFragment"
+        android:name="com.example.verhuur_app.ui.category.CategoryProductsFragment"
+        android:label="Categorie">
+        <argument
+            android:name="categoryName"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_categoryProductsFragment_to_productDetailFragment"
+            app:destination="@id/productDetailFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.example.verhuur_app.ui.search.SearchFragment"
+        android:label="Zoeken">
+        <action
+            android:id="@+id/action_searchFragment_to_productDetailFragment"
+            app:destination="@id/productDetailFragment" />
+        <argument
+            android:name="selectedCategory"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/addProductFragment"
+        android:name="com.example.verhuur_app.ui.addproduct.AddProductFragment"
+        android:label="Product Toevoegen" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.verhuur_app.ui.profile.ProfileFragment"
+        android:label="Profiel" />
+
+    <!-- Sub-destination -->
+    <fragment
+        android:id="@+id/productDetailFragment"
+        android:name="com.example.verhuur_app.ui.detail.ProductDetailFragment"
+        android:label="Product Details" />
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.verhuur_app.ui.notifications.NotificationsFragment"
+        android:label="Huurverzoeken"
+        tools:layout="@layout/fragment_notifications" />
+
+    <action
+        android:id="@+id/action_profileFragment_to_myProductsFragment"
+        app:destination="@id/myProductsFragment" />
+
+    <fragment
+        android:id="@+id/myProductsFragment"
+        android:name="com.example.verhuur_app.ui.profile.MyProductsFragment"
+        android:label="Mijn Producten">
+        <action
+            android:id="@+id/action_myProductsFragment_to_addProductFragment"
+            app:destination="@id/addProductFragment">
+            <argument
+                android:name="productId"
+                android:defaultValue="@null"
+                app:argType="string"
+                app:nullable="true" />
+            <argument
+                android:name="isEditing"
+                android:defaultValue="false"
+                app:argType="boolean" />
+        </action>
+    </fragment>
+
+</navigation> 

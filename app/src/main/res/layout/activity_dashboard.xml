@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- AppBarLayout met Toolbar -->
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.appbar.MaterialToolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="@color/primaryColor"
+            android:elevation="4dp"
+            app:title="@string/app_name"
+            app:titleTextColor="@color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <!-- Scrollbare inhoud -->
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Zoeken knop -->
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Zoeken"
+                android:textColor="@android:color/white"
+                app:cornerRadius="8dp"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="#006C4A" />
+
+            <!-- Aanbieden knop -->
+            <com.google.android.material.button.MaterialButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Aanbieden"
+                android:textColor="@android:color/white"
+                app:cornerRadius="8dp"
+                android:backgroundTint="#006C4A" />
+
+
+            <!-- Welkom Bericht -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/welcome_message"
+                android:textAppearance="?attr/textAppearanceHeadline6"
+                android:textColor="@color/primaryColor"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Categorie Subtitel -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/categories_subtitle"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:textColor="@color/secondaryColor"
+                android:layout_marginBottom="16dp" />
+
+            <!-- RecyclerView voor Categorieën -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/categories_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Floating Action Button -->
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fab_add_item"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:text="@string/add_item"
+        app:icon="@drawable/ic_add"
+        android:backgroundTint="@color/accentColor"
+        android:textColor="@color/white" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

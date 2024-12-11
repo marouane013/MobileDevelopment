@@ -7,6 +7,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,12 +49,16 @@ fun RegisterScreen(auth: FirebaseAuth, firestore: FirebaseFirestore) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var street by remember { mutableStateOf("") }
+    var houseNumber by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
     val context = LocalContext.current
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -91,12 +97,40 @@ fun RegisterScreen(auth: FirebaseAuth, firestore: FirebaseFirestore) {
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = street,
+            onValueChange = { street = it },
+            label = { Text("Street") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = houseNumber,
+            onValueChange = { houseNumber = it },
+            label = { Text("House Number") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            value = city,
+            onValueChange = { city = it },
+            label = { Text("City") },
+            modifier = Modifier.fillMaxWidth()
+        )
+
         Spacer(modifier = Modifier.height(32.dp))
 
         Button(
             onClick = {
                 if (password == confirmPassword) {
-                    registerUser(auth, firestore, email, password, context)
+                    val address = "$street $houseNumber, $city, Belgium"
+                    registerUser(auth, firestore, email, password, address, context)
                 } else {
                     Toast.makeText(context, "Passwords do not match", Toast.LENGTH_SHORT).show()
                 }
@@ -124,9 +158,10 @@ fun registerUser(
     firestore: FirebaseFirestore,
     email: String,
     password: String,
+    address: String,
     context: Context
 ) {
-    if (email.isBlank() || password.isBlank()) {
+    if (email.isBlank() || password.isBlank() || address.isBlank()) {
         Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
         return
     }
@@ -139,7 +174,8 @@ fun registerUser(
 
                 val userMap = hashMapOf(
                     "email" to email,
-                    "userId" to userId
+                    "userId" to userId,
+                    "address" to address
                 )
 
                 userId?.let {

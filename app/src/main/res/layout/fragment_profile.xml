@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Profile Header -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/profileImage"
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:layout_gravity="center"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_profile"
+                        app:shapeAppearanceOverlay="@style/CircleImageView"/>
+
+                    <TextView
+                        android:id="@+id/userName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center"
+                        android:textSize="24sp"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/userEmail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:textSize="16sp"
+                        android:textColor="?android:textColorSecondary"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Actions Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Account Beheer"
+                        android:textStyle="bold"
+                        android:textSize="18sp"
+                        android:layout_marginBottom="16dp"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/editProfileButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Profiel bewerken"
+                        app:icon="@drawable/ic_edit"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/myProductsButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Mijn Producten"
+                        app:icon="@drawable/ic_inventory"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/myRentalsButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Mijn Verhuuringen"
+                        app:icon="@drawable/ic_assignment"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/myReviewsButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Mijn Reviews"
+                        app:icon="@drawable/ic_star"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Logout Section -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/logoutButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Uitloggen"
+                        app:icon="@drawable/ic_logout"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton.Icon"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+</androidx.coordinatorlayout.widget.CoordinatorLayout> 
